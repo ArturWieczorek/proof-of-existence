@@ -1,0 +1,4 @@
+# Aiken artifacts / working dir (plutus.json IS committed - the off-chain side builds against it)
+artifacts/
+build/
+docs/
