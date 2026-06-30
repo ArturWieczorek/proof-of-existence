@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    application // gives `./gradlew run --args="..."`
     id("com.diffplug.spotless") version "6.25.0"
 }
 
@@ -48,4 +49,8 @@ spotless {
         googleJavaFormat("1.22.0")
         target("src/**/*.java")
     }
+}
+
+application {
+    mainClass.set("org.poe.NotaryCli")
 }

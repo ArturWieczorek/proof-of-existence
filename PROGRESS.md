@@ -3,17 +3,16 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: NOTARY CORE COMPLETE (hash -> record -> verify), all offline-verified. Ch 00-03 done + tagged.
-- Current chapter: Next up Ch 04 (timestamps and trust).
+- Status: PROJECT COMPLETE (Ch 00-07, 8 tags). Notary core (hash/record/verify) + CLI + optional
+  Aiken registry + optional CIP-25 certificate. 17 Java unit tests + 7 Aiken tests green.
+- Current chapter: none - done. Optional follow-ups below.
 - Last updated: 2026-06-30
-- Environment: Java 21 + Gradle wrapper 8.10.2 (reused from the xUSDC course). bloxbean 0.7.2.
-  13 unit tests green; NotaryIT (@Tag integration) compiles + self-skips without a backend.
+- Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2. Aiken 1.1.15 (onchain/).
 
-### Next steps (in order)
-1. Ch 04 - timestamps and trust (block time vs validity range; what the timestamp guarantees).
-2. Ch 05 - optional on-chain registry (Aiken) that rejects a duplicate hash.
-3. Ch 06 - optional NFT certificate per notarization.
-4. Ch 07 - testnet (preprod) config + a small CLI + mainnet notes + "what we simplified" (Merkle batching).
+### Optional follow-ups
+- Wire the on-chain registry insert + certificate mint off-chain (build the transactions in Java).
+- Add Merkle batching (one tx for many proofs).
+- Run on preprod: set POE_BACKEND_URL + POE_NOTARY_MNEMONIC, run `./gradlew integrationTest`.
 
 ## Chapter status board
 Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
@@ -24,10 +23,10 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 01 | The fingerprint (SHA-256) | [x] | ch01 | DocumentFingerprint; KAT-verified; 4 tests |
 | 02 | Record a proof (metadata) | [x] | ch02 | ProofRecord + Notary (label 1718); 6 tests |
 | 03 | Verify a proof | [x] | ch03 | parseProof + Verifier; end-to-end offline; NotaryIT self-skips; 3 tests |
-| 04 | Timestamps and trust | [ ] | - | |
-| 05 | On-chain registry (Aiken, optional) | [ ] | - | |
-| 06 | NFT certificate (optional) | [ ] | - | |
-| 07 | Testnet + wrap-up | [ ] | - | |
+| 04 | Timestamps and trust | [x] | ch04 | concept chapter: claimed time vs block time, validity interval |
+| 05 | On-chain registry (Aiken, optional) | [x] | ch05 | proof_registry sorted-set; uniqueness from strict sorting; 7 aiken tests |
+| 06 | NFT certificate (optional) | [x] | ch06 | Certificate CIP-25 (721) metadata builder; 1 test |
+| 07 | Testnet + wrap-up | [x] | ch07 | NotaryCli (hash/verify/proof) + testnet/mainnet notes + simplifications; CLI run live |
 
 ## Pinned tool versions
 | Tool | Version |
