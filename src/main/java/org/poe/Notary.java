@@ -45,6 +45,18 @@ public final class Notary {
   }
 
   /**
+   * Read a {@link ProofRecord} back out of a proof metadata map (the inverse of {@link #proofMap}).
+   * This is what you do after fetching a transaction's metadata from the chain, before verifying.
+   */
+  public static ProofRecord parseProof(CBORMetadataMap map) {
+    return new ProofRecord(
+        String.valueOf(map.get("h")),
+        String.valueOf(map.get("alg")),
+        String.valueOf(map.get("ts")),
+        String.valueOf(map.get("name")));
+  }
+
+  /**
    * Submit a proof to the chain: a tiny self-payment carrying the proof metadata. The notary
    * account pays the fee and signs. (Integration - needs a live backend; exercised from the
    * devnet/testnet.)
