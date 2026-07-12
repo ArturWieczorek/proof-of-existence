@@ -3,21 +3,29 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: PROJECT COMPLETE (Ch 00-07, 8 tags). Notary core (hash/record/verify) + CLI + optional
-  Aiken registry + optional CIP-25 certificate. 17 Java unit tests + 7 Aiken tests green.
+- Status: PROJECT COMPLETE (Ch 00-08, 9 tags). Notary core (hash/record/verify) + CLI + optional
+  Aiken registry + optional CIP-25 certificate + optional static web verify UI. 17 Java unit tests +
+  7 Aiken tests + 20 JS verify checks green.
 - Current chapter: none - done. Optional follow-ups below.
-- Last updated: 2026-06-30
-- Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2. Aiken 1.1.15 (onchain/).
+- Last updated: 2026-07-12
+- Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2. Aiken 1.1.15 (onchain/). Web UI:
+  static docs/ (vanilla JS ES module + vendored MIT QR); node/browser tested (Node 22 + Chromium).
 
 ### Optional follow-ups
-- Static web verify UI (GitHub Pages friendly; no backend). Hash the file in-browser (Web Crypto
-  SHA-256, file never uploaded), read the proof back via a keyless provider (Koios) by tx hash,
-  show MATCH / NO MATCH + the block time. Emit a shareable QR that encodes a verify deep-link
-  carrying { txHash, h } (e.g. .../#verify?tx=<txHash>&h=<hash>); the verify page also renders a
-  "view on explorer" button built from the txHash. One QR then gives both: (a) the real file
-  re-hash -> MATCH check, and (b) a one-click jump to the trusted public explorer showing the raw
-  on-chain record. Note: the explorer link proves the record exists; only the re-hash proves the
-  file matches it. Encode the durable txHash (explorer URL is just a convenience wrapper).
+- [DONE 2026-07-12, Ch08] Static web verify UI (GitHub Pages, docs/). Hash the file in-browser
+  (Web Crypto SHA-256, never uploaded), MATCH / NO MATCH + explorer link + shareable QR deep-link
+  (net/tx/h). IMPORTANT correction to the original plan: a keyless *live* read via Koios is NOT
+  possible from a browser - Koios sends no Access-Control-Allow-Origin, so CORS blocks every call
+  (verified in headless Chromium). Final design: keyless DEFAULT compares the file to the hash
+  carried in the proof link/QR and confirms the record via the explorer link; OPTIONAL live read
+  uses the user's own free Blockfrost project id (Blockfrost is CORS-enabled, keyed). Remaining
+  boundary: a real submit+verify on public preprod (needs a funded key + Blockfrost id) - all logic
+  is proven offline + in-browser; the live-key round-trip against real Blockfrost servers is the one
+  step not yet run.
+- Notarize FROM the web page (connect CIP-30 wallet, sign, submit metadata tx): decided OUT OF SCOPE
+  for PoE - it needs a wallet and duplicates the browser-wallet-submit pattern already built in the
+  memory-wall project; keeping PoE true to "no wallet/contract needed to timestamp". If ever wanted,
+  add as a further optional chapter reusing memory-wall's CIP-30 flow, NOT a separate project.
 - CIP-20 (label 674) human-readable tx message on the notarize tx: attach a readable one-liner
   (e.g. msg: ["Proof of Existence", "sha256: <hash>", "doc: <name> ts: <ts>"]) so the transaction
   reads nicely in wallets that render CIP-20. Keep the structured proof under label 1718 for machine
@@ -41,6 +49,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 05 | On-chain registry (Aiken, optional) | [x] | ch05 | proof_registry sorted-set; uniqueness from strict sorting; 7 aiken tests |
 | 06 | NFT certificate (optional) | [x] | ch06 | Certificate CIP-25 (721) metadata builder; 1 test |
 | 07 | Testnet + wrap-up | [x] | ch07 | NotaryCli (hash/verify/proof) + testnet/mainnet notes + simplifications; CLI run live |
+| 08 | Web verify UI (optional) | [x] | ch08 | static docs/ page: local Web Crypto hash, keyless compare + explorer, optional Blockfrost live read, QR deep-link; 20 JS checks + Chromium-driven |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -65,6 +74,30 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   Ch06's Certificate.cip25 metadata builder remains committed but is intentionally left unextended.
 
 ## Session log
+### 2026-07-12 - Ch08: static web verify UI (built + verified), CORS finding
+- Built docs/ (GitHub Pages): poe-verify.js (pure, DOM-free ES module), index.html, vendored MIT QR
+  (docs/vendor/qrcode.js, block-glyph ASCII renderer stripped to stay ASCII-only), docs/test/verify.test.mjs.
+- KEY FINDING (fact, not assumed): browsers CANNOT read Koios - it returns no
+  Access-Control-Allow-Origin, so CORS blocks every call (curl showed the header missing on the
+  actual response; a real headless-Chromium fetch from a clean local origin got "TypeError: Failed to
+  fetch" for GET /tip, GET/POST tx_metadata, and a text/plain "simple" POST). Blockfrost, by
+  contrast, returned a real HTTP 403 (no CORS error) -> it IS browser-usable, but needs a key.
+- Design (user-approved): keyless DEFAULT (hash file locally, compare to the hash in the proof
+  link/QR, confirm the record via the explorer link) + OPTIONAL live read with the user's own free
+  Blockfrost project id (auto-reads on-chain hash + block time, cross-checks the link).
+- Verified with real execution (no guessing): (1) sha256Hex == Java CLI `run --args="hash <file>"`
+  byte-for-byte on a real file (5c66.../b184... across runs); (2) 20 zero-dependency node checks over
+  the shipped module (compare, parse label 1718 in the real Blockfrost /metadata shape, fetch path
+  via injected fetch incl. project_id header + 404, deep-link round-trip, QR encode); (3) QR encoded
+  by the shipped lib and DECODED back to the exact link by an independent reader (jsQR); (4) the real
+  page driven in headless Chromium: keyless MATCH + NO_MATCH, optional Blockfrost MATCH with block
+  time+height, cross-check warning, QR canvas, zero console errors; (5) Koios CORS block reproduced
+  in-browser. Java side unchanged and still green.
+- Verification boundary: a real submit+verify on public preprod (funded key + Blockfrost id) not yet
+  run; every code path is otherwise proven. Tagged ch08.
+- Decided: notarize-from-web (CIP-30) stays out of scope (see follow-up note); memory-wall already
+  teaches browser-wallet submit.
+
 ### 2026-07-11 - design discussion (no code): display + verify UX, NFT tradeoffs
 - Clarified: the proof lives in transaction METADATA (label 1718), not in a datum. Datum only
   appears in the optional Ch05 registry (a {key,next} set node), and its off-chain wiring is still

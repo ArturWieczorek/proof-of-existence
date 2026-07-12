@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Proof of Existence - Verify</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5; margin: 0; padding: 1.25rem; max-width: 760px; margin-inline: auto;
+    background: Canvas; color: CanvasText;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  p.sub { margin: 0 0 1.25rem; opacity: .85; }
+  fieldset { border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 8px; margin: 0 0 1rem; padding: 1rem; }
+  legend { padding: 0 .4rem; font-weight: 600; }
+  label { display: block; font-weight: 600; margin: .5rem 0 .25rem; }
+  input[type=text], select {
+    width: 100%; padding: .5rem; font: inherit; border-radius: 6px;
+    border: 1px solid color-mix(in srgb, CanvasText 35%, transparent); background: Canvas; color: CanvasText;
+  }
+  input[type=file] { width: 100%; }
+  button {
+    font: inherit; font-weight: 600; padding: .6rem 1rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid color-mix(in srgb, CanvasText 35%, transparent); background: color-mix(in srgb, CanvasText 8%, Canvas); color: CanvasText;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+  .row { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .75rem; align-items: baseline; margin: .2rem 0; }
+  .row div:first-child { font-weight: 600; opacity: .8; }
+  .verdict { font-size: 1.3rem; font-weight: 800; padding: .75rem 1rem; border-radius: 8px; margin: .5rem 0; }
+  .match { background: #0a7d2e22; color: #0a7d2e; border: 1px solid #0a7d2e88; }
+  .nomatch { background: #b4232322; color: #d24; border: 1px solid #b4232388; }
+  .warn { background: #a6720022; color: #b8860b; border: 1px solid #a6720088; }
+  .hidden { display: none; }
+  a { color: LinkText; }
+  #qr { margin: .5rem 0; background: #fff; padding: 8px; display: inline-block; border-radius: 6px; }
+  footer { margin-top: 2rem; font-size: .85rem; opacity: .7; }
+  .note { font-size: .85rem; opacity: .8; margin: .35rem 0 0; }
+  details { margin-top: .5rem; }
+  summary { cursor: pointer; font-weight: 600; }
+</style>
+</head>
+<body>
+  <h1>Proof of Existence - Verify a document</h1>
+  <p class="sub">
+    Re-hash a file in your browser and check it against a proof recorded on Cardano. The file never
+    leaves your device (it is hashed locally with Web Crypto); this page holds no key that can spend
+    and never writes to the chain.
+  </p>
+
+  <fieldset>
+    <legend>1. The on-chain proof</legend>
+    <label for="network">Network</label>
+    <select id="network">
+      <option value="preprod">preprod (testnet)</option>
+      <option value="preview">preview (testnet)</option>
+      <option value="mainnet">mainnet</option>
+    </select>
+    <label for="tx">Transaction hash (the notarize tx)</label>
+    <input id="tx" type="text" class="mono" placeholder="64 hex chars" autocomplete="off" spellcheck="false" />
+    <label for="expected">Expected hash (from the proof link or QR)</label>
+    <input id="expected" type="text" class="mono" placeholder="64 hex chars - auto-filled when you open a proof link" autocomplete="off" spellcheck="false" />
+    <details id="advanced">
+      <summary>Optional: read the proof live on-chain (free Blockfrost key)</summary>
+      <p class="note">
+        Browsers cannot read Koios (no CORS). Paste your own free Blockfrost project id to fetch the
+        on-chain hash + block time directly and cross-check the link. The id is used only in your
+        browser, for reads; it is never sent anywhere else or stored. Leave blank to verify keylessly
+        against the expected hash and confirm the record yourself via the explorer link.
+      </p>
+      <label for="projectId">Blockfrost project id (optional)</label>
+      <input id="projectId" type="text" class="mono" placeholder="e.g. preprodXXXXXXXX" autocomplete="off" spellcheck="false" />
+    </details>
+  </fieldset>
+
+  <fieldset>
+    <legend>2. The document you hold</legend>
+    <label for="file">File (hashed locally - not uploaded)</label>
+    <input id="file" type="file" />
+    <div id="fileHash" class="note mono"></div>
+  </fieldset>
+
+  <button id="verify" disabled>Verify</button>
+  <span id="status" class="note"></span>
+
+  <div id="result" class="hidden">
+    <div id="verdict" class="verdict"></div>
+    <fieldset>
+      <legend>Recorded proof</legend>
+      <div class="row"><div>hash</div><div id="rHash" class="mono"></div></div>
+      <div class="row"><div>algorithm</div><div id="rAlg" class="mono"></div></div>
+      <div class="row"><div>claimed time</div><div id="rTs" class="mono"></div></div>
+      <div class="row"><div>name</div><div id="rName" class="mono"></div></div>
+      <div class="row"><div>block time</div><div id="rBlock" class="mono"></div></div>
+      <div class="row"><div>explorer</div><div><a id="rExplorer" href="#" target="_blank" rel="noopener">view the raw on-chain record</a></div></div>
+    </fieldset>
+    <fieldset>
+      <legend>Share this verification</legend>
+      <p class="note">Anyone can scan or open this to re-check the same file against the same record.</p>
+      <div id="qr"></div>
+      <div class="row"><div>link</div><div><a id="deepLink" class="mono" href="#"></a></div></div>
+    </fieldset>
+  </div>
+
+  <footer>
+    The explorer link proves the record exists on-chain; only the local re-hash proves your file
+    matches it. A proof shows a document existed no later than its block time, unchanged - not who
+    authored it. Proof of Existence, Chapter 08.
+  </footer>
+
+  <script src="vendor/qrcode.js"></script>
+  <script type="module">
+    import {
+      sha256Hex, compareHash, compareProof, fetchProofBlockfrost, buildDeepLink, parseDeepLink,
+      explorerUrl, ALGORITHM,
+    } from "./poe-verify.js";
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      network: $("network"), tx: $("tx"), expected: $("expected"), projectId: $("projectId"),
+      file: $("file"), fileHash: $("fileHash"), verify: $("verify"), status: $("status"),
+      result: $("result"), verdict: $("verdict"), rHash: $("rHash"), rAlg: $("rAlg"), rTs: $("rTs"),
+      rName: $("rName"), rBlock: $("rBlock"), rExplorer: $("rExplorer"), qr: $("qr"), deepLink: $("deepLink"),
+      advanced: $("advanced"),
+    };
+
+    let fileBytes = null, fileHex = null;
+    const HEX = /^[0-9a-f]{64}$/, TX = /^[0-9a-f]{64}$/;
+    const clean = (s) => s.trim().toLowerCase();
+
+    function refreshButton() {
+      const haveTx = TX.test(clean(els.tx.value));
+      const haveExpected = HEX.test(clean(els.expected.value));
+      const haveKey = els.projectId.value.trim().length > 0;
+      els.verify.disabled = !(fileBytes && haveTx && (haveExpected || haveKey));
+    }
+    ["input", "change"].forEach((e) => {
+      els.tx.addEventListener(e, refreshButton);
+      els.expected.addEventListener(e, refreshButton);
+      els.projectId.addEventListener(e, refreshButton);
+    });
+
+    els.file.addEventListener("change", async () => {
+      els.result.classList.add("hidden");
+      const f = els.file.files[0];
+      if (!f) { fileBytes = null; fileHex = null; els.fileHash.textContent = ""; refreshButton(); return; }
+      fileBytes = new Uint8Array(await f.arrayBuffer());
+      fileHex = await sha256Hex(fileBytes);
+      els.fileHash.textContent = "SHA-256: " + fileHex;
+      refreshButton();
+    });
+
+    const setVerdict = (cls, text) => { els.verdict.className = "verdict " + cls; els.verdict.textContent = text; };
+
+    function drawQr(text) {
+      els.qr.innerHTML = "";
+      const qr = window.qrcode(0, "M");
+      qr.addData(text); qr.make();
+      const count = qr.getModuleCount(), cell = 4, margin = 4 * cell, size = count * cell + margin * 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = "#000";
+      for (let r = 0; r < count; r++)
+        for (let c = 0; c < count; c++)
+          if (qr.isDark(r, c)) ctx.fillRect(margin + c * cell, margin + r * cell, cell, cell);
+      els.qr.appendChild(canvas);
+    }
+
+    function renderShare(network, tx, h) {
+      const link = buildDeepLink(location.href, network, tx, h);
+      drawQr(link);
+      els.deepLink.textContent = link; els.deepLink.href = link;
+    }
+
+    els.verify.addEventListener("click", async () => {
+      const network = els.network.value, tx = clean(els.tx.value);
+      const expected = clean(els.expected.value), key = els.projectId.value.trim();
+      els.verify.disabled = true;
+      els.status.textContent = "";
+      try {
+        if (key) {
+          // Optional live path: read the on-chain proof + block time from Blockfrost.
+          els.status.textContent = "Reading the proof on-chain via Blockfrost...";
+          const res = await fetchProofBlockfrost(network, tx, key);
+          els.status.textContent = "";
+          if (!res.found) { setVerdict("warn", "NO PROOF FOUND at this transaction (label 1718)."); }
+          else {
+            const cmp = compareProof(fileHex, res.proof);
+            if (cmp.status === "MATCH") setVerdict("match", "MATCH - this file is the notarized document.");
+            else if (cmp.status === "NO_MATCH") setVerdict("nomatch", "NO MATCH - this file is NOT the notarized document.");
+            else setVerdict("warn", "Cannot verify: proof used algorithm other than " + ALGORITHM + ".");
+          }
+          const p = res.proof || {};
+          els.rHash.textContent = p.h || "-";
+          els.rAlg.textContent = p.alg || "-";
+          els.rTs.textContent = p.ts || "-";
+          els.rName.textContent = p.name || "(none)";
+          els.rBlock.textContent = (res.blockTimeIso || "-") + (res.blockHeight ? "  (block " + res.blockHeight + ")" : "");
+          els.rExplorer.href = res.explorer;
+          if (res.found && expected && expected !== res.proof.h)
+            els.status.textContent = "Warning: the on-chain hash differs from the hash in the link you opened.";
+          renderShare(network, tx, res.found ? res.proof.h : expected);
+          els.result.classList.remove("hidden");
+          return;
+        }
+
+        // Keyless default: compare the file to the expected hash from the proof link/QR.
+        const cmp = compareHash(fileHex, expected);
+        if (cmp.status === "MATCH") setVerdict("match", "MATCH - this file reproduces the proof's hash.");
+        else if (cmp.status === "NO_MATCH") setVerdict("nomatch", "NO MATCH - this file does NOT reproduce the proof's hash.");
+        else { setVerdict("warn", "Provide the expected hash (from the proof link/QR) or a Blockfrost key."); }
+        els.rHash.textContent = expected || "-";
+        els.rAlg.textContent = ALGORITHM + " (assumed; confirm on the explorer)";
+        els.rTs.textContent = "-";
+        els.rName.textContent = "-";
+        els.rBlock.textContent = "confirm on the explorer ->";
+        els.rExplorer.href = explorerUrl(network, tx);
+        renderShare(network, tx, expected);
+        els.result.classList.remove("hidden");
+      } catch (e) {
+        els.status.textContent = "Lookup failed: " + e.message;
+      } finally {
+        refreshButton();
+      }
+    });
+
+    // Deep-link prefill: .../#verify?net=<network>&tx=<txHash>&h=<hash>
+    const dl = parseDeepLink(location.hash);
+    if (dl) {
+      els.network.value = dl.network;
+      els.tx.value = dl.tx;
+      els.expected.value = dl.h;
+      refreshButton();
+      els.status.textContent = "Loaded a shared verification - pick the file to check.";
+    }
+  </script>
+</body>
+</html>

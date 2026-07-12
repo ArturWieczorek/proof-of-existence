@@ -40,6 +40,7 @@ proof-of-existence/
   src/main/java/org/poe/   # DocumentFingerprint, Notary (metadata), Verifier, ...
   src/test/java/org/poe/
   chapters/NN-title/README.md
+  docs/                    # static web verify UI (GitHub Pages): index.html + poe-verify.js + vendor/
   infra/                   # devnet/testnet runbook (later)
 ```
 
@@ -52,6 +53,9 @@ proof-of-existence/
 - 05 (optional) On-chain registry - an Aiken validator that rejects a duplicate hash.
 - 06 (optional) NFT certificate - mint a portable certificate per notarization.
 - 07 Testnet + wrap-up - preprod config, mainnet notes, what we simplified (Merkle batching).
+- 08 (optional) Web verify UI - a static GitHub Pages page (docs/): hash the file in-browser (Web
+  Crypto), keyless MATCH/NO-MATCH vs the hash carried in a proof link/QR + explorer link, with an
+  optional user-supplied Blockfrost key for live on-chain read. (Koios is CORS-blocked in browsers.)
 
 ## 6. Going to mainnet
 Switch the backend URL + network in config and fund a mainnet key; the hash/record/verify logic is
