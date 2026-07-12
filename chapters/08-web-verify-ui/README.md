@@ -93,9 +93,10 @@ git tag ch08
 ```
 
 ## 7. What is next
-This is the last planned chapter. A natural next step is to notarize *from* a web page (connect a
-CIP-30 wallet, sign, submit the metadata tx) - but that is deliberately out of scope here: it needs a
-wallet and duplicates the browser-wallet-submit pattern already taught by the Memory Wall project.
+Chapter 09 adds an on-chain `notary submit` command to the CLI (so the tool can *record* proofs, not
+just verify them). A further natural step is to notarize *from* a web page (connect a CIP-30 wallet,
+sign, submit the metadata tx) - but that is deliberately out of scope here: it needs a wallet and
+duplicates the browser-wallet-submit pattern already taught by the Memory Wall project.
 Proof of Existence stays true to its thesis - you need no wallet and no contract to timestamp a
 document. See the follow-up note in `PROGRESS.md`.
 

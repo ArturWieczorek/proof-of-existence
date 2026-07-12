@@ -32,6 +32,8 @@ dated stamp that nobody can backdate.
 - Chapter 03: **verify** - re-hash a file and confirm it matches a recorded proof.
 - Chapters 04-07: what the timestamp really proves; an optional on-chain registry (Aiken) that
   prevents notarizing the same hash twice; an optional NFT certificate; and going to a public testnet.
+- Chapters 08-09 (optional, and built): a static web page anyone can verify a proof with (no wallet,
+  no key), and an on-chain `submit` command that records a proof from the CLI.
 
 ## 4. How this course works (same as the xUSDC bridge)
 - One **chapter = one git commit + tag** (`ch00`, `ch01`, ...). Check out any tag to land at that stage.

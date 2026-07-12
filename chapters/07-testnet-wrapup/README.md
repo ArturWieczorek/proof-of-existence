@@ -1,7 +1,9 @@
 # Chapter 07 - A CLI, a Public Testnet, and Wrap-up
 
 > Goal: turn the library into a usable command-line tool, point it at a public testnet, note what
-> changes for mainnet, and be honest about what we simplified. This is the final chapter.
+> changes for mainnet, and be honest about what we simplified. This chapter completes the core
+> notary; two optional chapters follow - 08 (a static web verify UI) and 09 (an on-chain `submit`
+> command in the CLI).
 
 ## 1. The CLI (`NotaryCli`)
 
@@ -15,8 +17,10 @@ The core is a pure `run(String[]) -> String`, so it is unit-tested without touch
 verify, and usage are all covered). For a standalone binary, `./gradlew installDist` produces a
 runnable script under `build/install/`.
 
-Recording a proof on-chain (and minting a certificate) needs a backend + key, so it stays in
-`Notary.record(...)` / `Certificate` (the integration path), not in this offline CLI.
+Recording a proof on-chain (and minting a certificate) needs a backend + key, so at this stage it
+stays in `Notary.record(...)` / `Certificate` (the integration path), not in this offline CLI.
+(Chapter 09 later adds a `notary submit` command that brings recording into the CLI, with a keyless
+provider by default.)
 
 ## 2. Going to a public testnet (preprod/preview)
 
