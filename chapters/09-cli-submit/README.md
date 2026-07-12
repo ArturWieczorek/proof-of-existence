@@ -319,8 +319,8 @@ notary submit <file> [name]
 ```bash
 notary submit contract.txt "my-contract" \
   --network preprod \
-  --signing-key /path/to/my-preprod.sk \
-  --address addr_test1vqm0tkt55qhpqwrc0pftux0q42geqdc0ngzdd0tk00ftw8q2sg952
+  --signing-key /path/to/your-payment.sk \
+  --address addr_test1v...your-payment-address
 ```
 
 **Example B - Blockfrost on mainnet, with a mnemonic** (secret stays in the environment):

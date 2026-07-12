@@ -3,10 +3,11 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: PROJECT COMPLETE (Ch 00-09, 10 tags). Notary core (hash/record/verify) + CLI (incl. an
-  on-chain `submit`) + optional Aiken registry + optional CIP-25 certificate + optional static web
-  verify UI. 39 Java unit tests + 7 Aiken tests + 20 JS verify checks green. Recording proven live on
-  preprod (real tx, see session log).
+- Status: PROJECT COMPLETE (Ch 00-10, 11 chapter tags). Notary core (hash/record/verify) + CLI (incl.
+  on-chain `submit`) + optional Aiken registry + optional CIP-25 certificate + static web verify UI +
+  published (public GitHub Pages site + a released runnable notary.jar + on-page open-format docs).
+  39 Java unit tests + 7 Aiken tests + 20 JS verify checks green. Recording proven live on preprod
+  (real txs), including via the released fat jar.
 - Current chapter: none - done. Optional follow-ups below.
 - Last updated: 2026-07-12
 - Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2 (lib + blockfrost + koios backends).
@@ -53,6 +54,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 07 | Testnet + wrap-up | [x] | ch07 | NotaryCli (hash/verify/proof) + testnet/mainnet notes + simplifications; CLI run live |
 | 08 | Web verify UI (optional) | [x] | ch08 | static docs/ page: local Web Crypto hash, keyless compare + explorer, optional Blockfrost live read, QR deep-link; 20 JS checks + Chromium-driven |
 | 09 | CLI submit (record on-chain) | [x] | ch09 | notary submit: Koios(keyless default)/Blockfrost, .sk/mnemonic, flags+env; one record path via BackendService+TxSigner; verified live on preprod |
+| 10 | Publish | [x] | ch10 | public GitHub Pages site + released runnable notary.jar (shadow fat jar) + on-page open-format (label 1718) + CLI usage docs; secrets-audited before going public |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -84,6 +86,24 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   Ch06's Certificate.cip25 metadata builder remains committed but is intentionally left unextended.
 
 ## Session log
+### 2026-07-12 - Ch10: publish (public site + released jar + open-format docs)
+- Added the `com.gradleup.shadow` Gradle plugin (build-time only) to produce one runnable fat jar
+  `build/libs/notary.jar` (bundles bloxbean + koios). Proven working: offline hash matches the known
+  SHA-256, and a REAL preprod submit via the jar succeeded (tx 9494aa43...; earlier CLI submit tx
+  1d65dd63...). This guards against fat-jar service-loading breakage.
+- Web page (docs/index.html): added a "How are these proofs created?" section documenting the open
+  metadata format (label 1718) + three creation paths (our CLI keyless/Blockfrost/Yaci, any
+  wallet/cardano-cli, local node) + a Releases download link. Page re-verified in Chromium (12 checks,
+  no console errors).
+- Ran a dedicated secrets/confidentiality review agent over the whole tree + all 14 commits before
+  publishing: VERDICT SAFE (no keys/mnemonics/API tokens; .gitignore correct; only placeholders,
+  public testnet tx/address, and SHA-256 test vectors). Noted the commit-author work email becomes
+  public.
+- CLAUDE.md roadmap clarified: "(optional)" = beyond-core and BUILT; Ch05/06 are intentionally
+  unwired/undeployed extension points (not deleted).
+- Published: repo made public, pushed, notary.jar released, GitHub Pages enabled (main/docs). [see the
+  session end for the live URLs]
+
 ### 2026-07-12 - Ch09: CLI `submit` (record on-chain), verified live on preprod
 - Added `notary submit <file> [name]`: providers Koios (keyless default) / Blockfrost (keyed) / Yaci
   (local, reuses the Blockfrost backend at http://localhost:8080/api/v1/); keys via cardano-cli `.sk`

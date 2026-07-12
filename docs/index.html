@@ -41,6 +41,8 @@
   .note { font-size: .85rem; opacity: .8; margin: .35rem 0 0; }
   details { margin-top: .5rem; }
   summary { cursor: pointer; font-weight: 600; }
+  pre { background: color-mix(in srgb, CanvasText 7%, Canvas); padding: .7rem; border-radius: 6px; overflow-x: auto; font-size: .82rem; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 </style>
 </head>
 <body>
@@ -105,10 +107,53 @@
     </fieldset>
   </div>
 
+  <details id="howto">
+    <summary>How are these proofs created? (make your own)</summary>
+    <p class="note">
+      A proof is just a normal Cardano transaction carrying a small metadata note under label
+      <b>1718</b>. Nothing is locked to this website: any tool that can attach that note can create a
+      proof, and any tool can read it back. Only the hash goes on-chain - your document stays private.
+    </p>
+    <p class="note">The note format (Cardano transaction metadata, label 1718):</p>
+    <pre>{
+  "1718": {
+    "h":    "&lt;the document's SHA-256 hash, 64 hex chars&gt;",
+    "alg":  "SHA-256",
+    "ts":   "&lt;an ISO-8601 timestamp&gt;",
+    "name": "&lt;an optional short label&gt;"
+  }
+}</pre>
+    <p class="note"><b>1. Easiest - the command-line tool.</b> Download <code>notary.jar</code>
+      (needs Java 21 installed) and run:</p>
+    <pre># keyless, no sign-up (default provider is Koios):
+java -jar notary.jar submit myfile.pdf "my label" \
+    --network preprod --signing-key my.sk --address addr_test1v...
+
+# or via Blockfrost (needs a free project id from blockfrost.io):
+java -jar notary.jar submit myfile.pdf \
+    --backend blockfrost --blockfrost-project-id preprod... --network preprod \
+    --signing-key my.sk --address addr_test1v...
+
+# or against a local Yaci DevKit node (no third party at all):
+java -jar notary.jar submit myfile.pdf --backend yaci --network testnet \
+    --signing-key my.sk --address addr_test1v...
+
+# hash / verify are fully local - no key, no network, no account:
+java -jar notary.jar hash myfile.pdf
+java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
+    <p class="note">
+      <a id="dl" href="https://github.com/ArturWieczorek/proof-of-existence/releases/latest/download/notary.jar">Download notary.jar</a>
+      | <a href="https://github.com/ArturWieczorek/proof-of-existence">source, docs and all options on GitHub</a>
+    </p>
+    <p class="note"><b>2. Any other tool.</b> Attach the JSON above under metadata label 1718 to a
+      transaction (with a wallet that supports metadata, or <code>cardano-cli</code>), submit it, and
+      it becomes a proof this page can verify. The tool is a convenience, not a lock-in.</p>
+  </details>
+
   <footer>
     The explorer link proves the record exists on-chain; only the local re-hash proves your file
     matches it. A proof shows a document existed no later than its block time, unchanged - not who
-    authored it. Proof of Existence, Chapter 08.
+    authored it. Proof of Existence.
   </footer>
 
   <script src="vendor/qrcode.js"></script>

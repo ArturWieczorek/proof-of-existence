@@ -51,8 +51,10 @@ proof-of-existence/
 - 02 Record a proof - write hash + timestamp into transaction metadata.
 - 03 Verify a proof - re-hash a file and confirm it matches a recorded proof.
 - 04 Timestamps and trust - block time vs validity range; what the timestamp really proves.
-- 05 (optional) On-chain registry - an Aiken validator that rejects a duplicate hash.
-- 06 (optional) NFT certificate - mint a portable certificate per notarization.
+- 05 (optional) On-chain registry - an Aiken validator that rejects a duplicate hash. Built + tested
+  (`aiken check`), but deliberately NOT wired into the off-chain flow or deployed (see note below).
+- 06 (optional) NFT certificate - a CIP-25 certificate metadata builder. Built + tested, but we
+  decided NOT to pursue the NFT path (mint) or deploy it (see the 2026-07-11 decision in PROGRESS.md).
 - 07 Testnet + wrap-up - preprod config, mainnet notes, what we simplified (Merkle batching).
 - 08 (optional) Web verify UI - a static GitHub Pages page (docs/): hash the file in-browser (Web
   Crypto), keyless MATCH/NO-MATCH vs the hash carried in a proof link/QR + explorer link, with an
@@ -60,6 +62,14 @@ proof-of-existence/
 - 09 CLI submit - `notary submit` records a proof on-chain: providers Koios (keyless default) /
   Blockfrost / Yaci DevKit (local); keys via cardano-cli `.sk` or a mnemonic; flags > env > defaults;
   one record path via bloxbean BackendService + TxSigner. Verified live on preprod.
+- 10 Publish - make the site public on GitHub Pages, release a runnable `notary.jar`, and document
+  the open metadata format + CLI usage on the page so anyone can create/read a proof with any tool.
+
+> "(optional)" means beyond the core notary, NOT unbuilt: every chapter above is built and tested.
+> Chapters 05 and 06 are intentionally left as EXTENSION POINTS - the code exists and its tests pass,
+> but the live off-chain wiring / deployment is not done (05: build the insert tx; 06: mint the NFT),
+> because the core notary does not need them. Anyone who forks the repo can build on them; we chose
+> not to deploy them (06 by explicit decision). This is by design, and flagged for honesty.
 
 ## 6. Going to mainnet
 Switch the backend URL + network in config and fund a mainnet key; the hash/record/verify logic is

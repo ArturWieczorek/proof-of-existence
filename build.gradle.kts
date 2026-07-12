@@ -2,6 +2,7 @@ plugins {
     `java-library`
     application // gives `./gradlew run --args="..."`
     id("com.diffplug.spotless") version "6.25.0"
+    id("com.gradleup.shadow") version "8.3.5" // `./gradlew shadowJar` -> one runnable fat jar
 }
 
 repositories {
@@ -56,4 +57,9 @@ spotless {
 
 application {
     mainClass.set("org.poe.NotaryCli")
+}
+
+// One self-contained, runnable jar for the release: `java -jar notary.jar <command> ...`
+tasks.named<Jar>("shadowJar") {
+    archiveFileName.set("notary.jar")
 }
