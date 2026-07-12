@@ -85,11 +85,16 @@ java -jar notary.jar submit myfile.pdf "my label" \
 
 **Providers** (where the tool reads UTxOs/params and submits) - choose with `--backend`:
 
-| `--backend` | Sign-up | Notes |
-|-------------|---------|-------|
-| `koios` (default) | none | keyless, hosted - just works |
-| `blockfrost` | free key | add `--blockfrost-project-id <id>` |
-| `yaci` | none | a local Yaci DevKit node (see below) |
+| `--backend` | Networks | Sign-up | Notes |
+|-------------|----------|---------|-------|
+| `koios` (default) | preprod / preview / mainnet | none | keyless, hosted - just works |
+| `blockfrost` | preprod / preview / mainnet | free key | add `--blockfrost-project-id <id>` |
+| `yaci` | a LOCAL devnet only | none | a private sandbox on your machine - NOT preprod/mainnet (see below) |
+
+> **Which one do I want?** To record on the real **preprod** testnet or **mainnet**, use the default
+> keyless **Koios** (or **Blockfrost**) - no local software, nothing to install. That is exactly how
+> the live demo proof above was recorded (`--network preprod`, default Koios). Reach for **Yaci
+> DevKit** only when you want a private local playground for development; it is not a public network.
 
 **Keys** - provide exactly one:
 - a cardano-cli signing key: `--signing-key payment.skey --address addr_test1v...`, or
@@ -99,10 +104,16 @@ Every option can also come from an environment variable (`POE_NETWORK`, `POE_BAC
 `POE_BACKEND_URL`, `POE_BLOCKFROST_PROJECT_ID`, `POE_SIGNING_KEY`, `POE_NOTARY_ADDRESS`). Flags win,
 then env, then sensible defaults. Run `java -jar notary.jar` with no arguments for the full usage.
 
-## The local way - Yaci DevKit
+## For local development only - Yaci DevKit (not preprod/mainnet)
 
-[Yaci DevKit](https://github.com/bloxbean/yaci-devkit) runs a private Cardano network **and** a
-Blockfrost-compatible API on your own machine - no third-party service, no accounts.
+This section is **only** for experimenting on a private local network. If you want to record a proof
+on the real **preprod** or **mainnet**, ignore Yaci entirely and use the `submit` command from the
+TL;DR above (default keyless Koios, or Blockfrost) - there is nothing to install.
+
+[Yaci DevKit](https://github.com/bloxbean/yaci-devkit) runs its **own private throwaway Cardano
+network** (a devnet) **and** a Blockfrost-compatible API on your machine - instant blocks, a built-in
+faucet, no accounts, no public network. It is a development sandbox: proofs recorded on it exist only
+on your local devnet and are not visible to public explorers, Koios, or the hosted web page.
 
 ```bash
 # 1. start a local devnet (Docker); in the Yaci CLI:

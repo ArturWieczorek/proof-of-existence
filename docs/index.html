@@ -94,10 +94,17 @@
     <fieldset>
       <legend>Recorded proof</legend>
       <div class="row"><div>hash</div><div id="rHash" class="mono"></div></div>
-      <div class="row"><div>algorithm</div><div id="rAlg" class="mono"></div></div>
-      <div class="row"><div>claimed time</div><div id="rTs" class="mono"></div></div>
-      <div class="row"><div>name</div><div id="rName" class="mono"></div></div>
-      <div class="row"><div>block time</div><div id="rBlock" class="mono"></div></div>
+      <div id="onchainRows">
+        <div class="row"><div>algorithm</div><div id="rAlg" class="mono"></div></div>
+        <div class="row"><div>claimed time</div><div id="rTs" class="mono"></div></div>
+        <div class="row"><div>name</div><div id="rName" class="mono"></div></div>
+        <div class="row"><div>block time</div><div id="rBlock" class="mono"></div></div>
+      </div>
+      <p id="keylessNote" class="note hidden">
+        Keyless check: your file matches the hash carried in this proof link. The algorithm,
+        timestamp, name and block time are recorded on-chain - to show them here, tick "read the
+        proof live on-chain" above (a free Blockfrost key), or open the raw record on the explorer.
+      </p>
       <div class="row"><div>explorer</div><div><a id="rExplorer" href="#" target="_blank" rel="noopener">view the raw on-chain record</a></div></div>
     </fieldset>
     <fieldset>
@@ -170,7 +177,7 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
       file: $("file"), fileHash: $("fileHash"), verify: $("verify"), status: $("status"),
       result: $("result"), verdict: $("verdict"), rHash: $("rHash"), rAlg: $("rAlg"), rTs: $("rTs"),
       rName: $("rName"), rBlock: $("rBlock"), rExplorer: $("rExplorer"), qr: $("qr"), deepLink: $("deepLink"),
-      advanced: $("advanced"),
+      advanced: $("advanced"), onchainRows: $("onchainRows"), keylessNote: $("keylessNote"),
     };
 
     let fileBytes = null, fileHex = null;
@@ -234,6 +241,8 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
           els.status.textContent = "Reading the proof on-chain via Blockfrost...";
           const res = await fetchProofBlockfrost(network, tx, key);
           els.status.textContent = "";
+          els.onchainRows.classList.remove("hidden"); // live read: we have the full record
+          els.keylessNote.classList.add("hidden");
           if (!res.found) { setVerdict("warn", "NO PROOF FOUND at this transaction (label 1718)."); }
           else {
             const cmp = compareProof(fileHex, res.proof);
@@ -261,10 +270,8 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
         else if (cmp.status === "NO_MATCH") setVerdict("nomatch", "NO MATCH - this file does NOT reproduce the proof's hash.");
         else { setVerdict("warn", "Provide the expected hash (from the proof link/QR) or a Blockfrost key."); }
         els.rHash.textContent = expected || "-";
-        els.rAlg.textContent = ALGORITHM + " (assumed; confirm on the explorer)";
-        els.rTs.textContent = "-";
-        els.rName.textContent = "-";
-        els.rBlock.textContent = "confirm on the explorer ->";
+        els.onchainRows.classList.add("hidden"); // keyless: we did not read the chain
+        els.keylessNote.classList.remove("hidden");
         els.rExplorer.href = explorerUrl(network, tx);
         renderShare(network, tx, expected);
         els.result.classList.remove("hidden");
