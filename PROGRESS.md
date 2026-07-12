@@ -3,13 +3,15 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: PROJECT COMPLETE (Ch 00-08, 9 tags). Notary core (hash/record/verify) + CLI + optional
-  Aiken registry + optional CIP-25 certificate + optional static web verify UI. 17 Java unit tests +
-  7 Aiken tests + 20 JS verify checks green.
+- Status: PROJECT COMPLETE (Ch 00-09, 10 tags). Notary core (hash/record/verify) + CLI (incl. an
+  on-chain `submit`) + optional Aiken registry + optional CIP-25 certificate + optional static web
+  verify UI. 39 Java unit tests + 7 Aiken tests + 20 JS verify checks green. Recording proven live on
+  preprod (real tx, see session log).
 - Current chapter: none - done. Optional follow-ups below.
 - Last updated: 2026-07-12
-- Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2. Aiken 1.1.15 (onchain/). Web UI:
-  static docs/ (vanilla JS ES module + vendored MIT QR); node/browser tested (Node 22 + Chromium).
+- Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2 (lib + blockfrost + koios backends).
+  Aiken 1.1.15 (onchain/). Web UI: static docs/ (vanilla JS ES module + vendored MIT QR); node/browser
+  tested (Node 22 + Chromium).
 
 ### Optional follow-ups
 - [DONE 2026-07-12, Ch08] Static web verify UI (GitHub Pages, docs/). Hash the file in-browser
@@ -50,6 +52,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 06 | NFT certificate (optional) | [x] | ch06 | Certificate CIP-25 (721) metadata builder; 1 test |
 | 07 | Testnet + wrap-up | [x] | ch07 | NotaryCli (hash/verify/proof) + testnet/mainnet notes + simplifications; CLI run live |
 | 08 | Web verify UI (optional) | [x] | ch08 | static docs/ page: local Web Crypto hash, keyless compare + explorer, optional Blockfrost live read, QR deep-link; 20 JS checks + Chromium-driven |
+| 09 | CLI submit (record on-chain) | [x] | ch09 | notary submit: Koios(keyless default)/Blockfrost, .sk/mnemonic, flags+env; one record path via BackendService+TxSigner; verified live on preprod |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -61,6 +64,13 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | Spotless / google-java-format | 6.25.0 / 1.22.0 |
 
 ## Decisions and deviations (append-only)
+- 2026-07-12 - Ch09: added dependency `cardano-client-backend-koios:0.7.2` (reason: a keyless provider
+  so the CLI `submit` works with no API sign-up; Blockfrost still supported and stays the browser
+  default; Yaci reuses the Blockfrost backend against a local URL). Added a branch-free
+  `Notary.record(backend, address, TxSigner, proof)` so mnemonic and cardano-cli `.sk` keys share one
+  path. CLI config = flags > env > defaults; secrets (mnemonic) env-only. Ogmios/Kupo (local node) and
+  a distributable binary deferred (documented as follow-ups in Ch09). Detailed beginner walkthrough
+  written as chapters/09-cli-submit/README.md.
 - 2026-06-30 - Single Gradle module (project is small). Fingerprint = SHA-256 via JDK (no crypto dep; blake2b-256 noted as the Cardano-native alternative). Metadata-first recording (no contract for the core).
 - 2026-07-11 - Do NOT pursue the NFT certificate path (neither notary-mint nor user self-mint). Why:
   (1) it adds portability, not proof - the proof is always the hash + block time, and transferring or
@@ -74,6 +84,22 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   Ch06's Certificate.cip25 metadata builder remains committed but is intentionally left unextended.
 
 ## Session log
+### 2026-07-12 - Ch09: CLI `submit` (record on-chain), verified live on preprod
+- Added `notary submit <file> [name]`: providers Koios (keyless default) / Blockfrost (keyed) / Yaci
+  (local, reuses the Blockfrost backend at http://localhost:8080/api/v1/); keys via cardano-cli `.sk`
+  (+ --address) or POE_NOTARY_MNEMONIC; config flags > env > defaults; one record path via bloxbean
+  `BackendService` + `TxSigner` interfaces (backendFor/senderFor factories; ProofSubmitter test seam;
+  resolveConfig pure). Added the `cardano-client-backend-koios` dependency.
+- A unit test caught a real bug: Koios (Retrofit) requires a trailing slash on the base URL; fixed the
+  defaults. 39 Java tests green (spotless clean).
+- Verified LIVE on preprod with the user's cardano-cli `.sk` via keyless Koios: tx
+  1d65dd63b4e091977742e7077197bee48554dd259a892f42c053234760032fcc, block 4928405, block time
+  2026-07-12T17:02:05Z; on-chain label 1718 h == file hash (267219dd...); confirmed a normal ed25519
+  `.sk` signs correctly through bloxbean. Verified via the web page (MATCH, keyless) and `notary
+  verify` (MATCH).
+- Wrote a detailed, beginner-first chapter doc (interfaces/factories/seam/pure-function explained,
+  provider + key concepts, real command/output examples, the CORS asymmetry, going-to-mainnet).
+
 ### 2026-07-12 - Ch08: static web verify UI (built + verified), CORS finding
 - Built docs/ (GitHub Pages): poe-verify.js (pure, DOM-free ES module), index.html, vendored MIT QR
   (docs/vendor/qrcode.js, block-glyph ASCII renderer stripped to stay ASCII-only), docs/test/verify.test.mjs.

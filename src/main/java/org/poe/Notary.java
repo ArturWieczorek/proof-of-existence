@@ -3,6 +3,7 @@ package org.poe;
 import com.bloxbean.cardano.client.account.Account;
 import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.backend.api.BackendService;
+import com.bloxbean.cardano.client.function.TxSigner;
 import com.bloxbean.cardano.client.function.helper.SignerProviders;
 import com.bloxbean.cardano.client.metadata.Metadata;
 import com.bloxbean.cardano.client.metadata.cbor.CBORMetadata;
@@ -62,14 +63,22 @@ public final class Notary {
    * devnet/testnet.)
    */
   public static TxResult record(BackendService backend, Account notary, ProofRecord proof) {
+    return record(backend, notary.baseAddress(), SignerProviders.signerFrom(notary), proof);
+  }
+
+  /**
+   * Record a proof from a sender address + an arbitrary signer. This is the single code path both
+   * key kinds go through: an HD account (mnemonic) and a raw cardano-cli signing key both produce a
+   * {@link TxSigner}, and the backend is any {@link BackendService} (Koios, Blockfrost, a local
+   * node's provider, ...). Network and provider are configuration, never hardcoded.
+   */
+  public static TxResult record(
+      BackendService backend, String senderAddress, TxSigner signer, ProofRecord proof) {
     Tx tx =
         new Tx()
-            .payToAddress(notary.baseAddress(), Amount.ada(1))
+            .payToAddress(senderAddress, Amount.ada(1))
             .attachMetadata(buildMetadata(proof))
-            .from(notary.baseAddress());
-    return new QuickTxBuilder(backend)
-        .compose(tx)
-        .withSigner(SignerProviders.signerFrom(notary))
-        .complete();
+            .from(senderAddress);
+    return new QuickTxBuilder(backend).compose(tx).withSigner(signer).complete();
   }
 }

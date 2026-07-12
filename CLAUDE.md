@@ -26,7 +26,8 @@ logic is testnet-specific.
 
 ## 3. Tech stack (the complete allowed list)
 - Java 21 + Gradle (wrapper, 8.10.2) + JUnit 5 + AssertJ + Spotless (google-java-format).
-- bloxbean `cardano-client-lib` + `cardano-client-backend-blockfrost` (metadata, tx, backend).
+- bloxbean `cardano-client-lib` + `cardano-client-backend-blockfrost` + `cardano-client-backend-koios`
+  (metadata, tx, and both a keyed and a keyless backend; Yaci DevKit reuses the Blockfrost backend).
 - SHA-256 via the JDK (no crypto dependency for hashing).
 - Aiken (only if/when we add the optional registry validator).
 - Local: Yaci DevKit devnet (Blockfrost-compatible) then preprod/preview. Integration tests
@@ -56,6 +57,9 @@ proof-of-existence/
 - 08 (optional) Web verify UI - a static GitHub Pages page (docs/): hash the file in-browser (Web
   Crypto), keyless MATCH/NO-MATCH vs the hash carried in a proof link/QR + explorer link, with an
   optional user-supplied Blockfrost key for live on-chain read. (Koios is CORS-blocked in browsers.)
+- 09 CLI submit - `notary submit` records a proof on-chain: providers Koios (keyless default) /
+  Blockfrost / Yaci DevKit (local); keys via cardano-cli `.sk` or a mnemonic; flags > env > defaults;
+  one record path via bloxbean BackendService + TxSigner. Verified live on preprod.
 
 ## 6. Going to mainnet
 Switch the backend URL + network in config and fund a mainnet key; the hash/record/verify logic is

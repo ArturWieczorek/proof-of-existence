@@ -18,6 +18,9 @@ dependencies {
     // (Not needed for Chapter 01's pure-Java hashing, but used from Chapter 02 onward.)
     implementation("com.bloxbean.cardano:cardano-client-lib:0.7.2")
     implementation("com.bloxbean.cardano:cardano-client-backend-blockfrost:0.7.2")
+    // Koios backend: a keyless provider so the CLI can submit on-chain with no API signup
+    // (Ch08 submit; Blockfrost is still supported and is the default for the browser verify page).
+    implementation("com.bloxbean.cardano:cardano-client-backend-koios:0.7.2")
 
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
