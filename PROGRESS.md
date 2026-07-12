@@ -101,8 +101,11 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   public.
 - CLAUDE.md roadmap clarified: "(optional)" = beyond-core and BUILT; Ch05/06 are intentionally
   unwired/undeployed extension points (not deleted).
-- Published: repo made public, pushed, notary.jar released, GitHub Pages enabled (main/docs). [see the
-  session end for the live URLs]
+- Published (all verified live): repo made public, pushed, GitHub Pages enabled (main/docs), and
+  notary.jar released. Live site: https://arturwieczorek.github.io/proof-of-existence/ (driven in
+  Chromium against real preprod tx 1d65dd63... -> MATCH, no console errors). Download:
+  https://github.com/ArturWieczorek/proof-of-existence/releases/latest/download/notary.jar (HTTP 200,
+  ~21 MB). Release: v0.1.0. Repo: https://github.com/ArturWieczorek/proof-of-existence (PUBLIC).
 
 ### 2026-07-12 - Ch09: CLI `submit` (record on-chain), verified live on preprod
 - Added `notary submit <file> [name]`: providers Koios (keyless default) / Blockfrost (keyed) / Yaci
