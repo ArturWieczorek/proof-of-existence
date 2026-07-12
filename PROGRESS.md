@@ -6,8 +6,9 @@
 - Status: PROJECT COMPLETE (Ch 00-10, 11 chapter tags). Notary core (hash/record/verify) + CLI (incl.
   on-chain `submit`) + optional Aiken registry + optional CIP-25 certificate + static web verify UI +
   published (public GitHub Pages site + a released runnable notary.jar + on-page open-format docs).
-  39 Java unit tests + 7 Aiken tests + 20 JS verify checks green. Recording proven live on preprod
-  (real txs), including via the released fat jar.
+  36 Java unit tests + 7 Aiken tests + 22 JS verify checks green. Recording proven live on preprod
+  (real txs), including via the released fat jar. Proof records carry an optional 64-byte
+  `description` (label 1718), verified end-to-end on preprod.
 - Current chapter: none - done. Optional follow-ups below.
 - Last updated: 2026-07-12
 - Environment: Java 21 + Gradle wrapper 8.10.2. bloxbean 0.7.2 (lib + blockfrost + koios backends).
@@ -86,6 +87,17 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   Ch06's Certificate.cip25 metadata builder remains committed but is intentionally left unextended.
 
 ## Session log
+### 2026-07-12 - add optional 64-byte `description` field to proofs (label 1718)
+- Simple, non-disruptive: `description` is a 5th ProofRecord field, capped at 64 bytes exactly like
+  `name`; a 4-arg ProofRecord constructor keeps every existing caller/proof working (verification is
+  unchanged - it only uses the hash). Written to metadata only when non-empty (proofs without it stay
+  byte-identical to before) and null-guarded on read (old proofs parse fine). Threaded through the CLI
+  (`--description`, works with `proof` and `submit`) and the web verify page (parsed + a display row,
+  shown in the Blockfrost live-read path; hidden keyless like the other on-chain fields). Format docs
+  (README + page + cardano-cli example) updated.
+- Verified: 36 Java unit tests + 22 JS checks + browser drive green; and a REAL preprod submit with a
+  description (tx d1baa169..., on-chain label 1718 shows "description":"final signed copy, desc test").
+
 ### 2026-07-12 - Ch10: publish (public site + released jar + open-format docs)
 - Added the `com.gradleup.shadow` Gradle plugin (build-time only) to produce one runnable fat jar
   `build/libs/notary.jar` (bundles bloxbean + koios). Proven working: offline hash matches the known

@@ -83,6 +83,24 @@ class NotaryCliTest {
   }
 
   @Test
+  @DisplayName("submit --description records it and reports it")
+  void submitWithDescription() throws IOException {
+    Path f = fileWith("doc");
+    AtomicReference<ProofRecord> proof = new AtomicReference<>();
+    NotaryCli.ProofSubmitter fake =
+        (p, fl) -> {
+          proof.set(p);
+          return "tx_x";
+        };
+    String out =
+        NotaryCli.run(
+            new String[] {"submit", f.toString(), "label", "--description", "final signed copy"},
+            fake);
+    assertThat(proof.get().description()).isEqualTo("final signed copy");
+    assertThat(out).contains("description=final signed copy");
+  }
+
+  @Test
   @DisplayName("submit with no file prints usage (does not call the submitter)")
   void submitNoFile() {
     NotaryCli.ProofSubmitter mustNotRun =

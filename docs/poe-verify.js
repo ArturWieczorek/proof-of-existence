@@ -77,6 +77,7 @@ export function parseBlockfrostProof(metadataArray) {
     alg: typeof map.alg === "string" ? map.alg : "",
     ts: map.ts == null ? "" : String(map.ts),
     name: map.name == null ? "" : String(map.name),
+    description: map.description == null ? "" : String(map.description),
   };
 }
 

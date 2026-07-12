@@ -43,12 +43,13 @@ builds one piece, and each is one git commit + tag (`ch00` ... `ch10`). Start at
 A proof is a normal Cardano transaction carrying this note in its metadata under label **1718**:
 
 ```json
-{ "1718": { "h": "<document SHA-256, 64 hex>", "alg": "SHA-256", "ts": "<ISO-8601>", "name": "<label>" } }
+{ "1718": { "h": "<document SHA-256, 64 hex>", "alg": "SHA-256", "ts": "<ISO-8601>", "name": "<label>", "description": "<optional>" } }
 ```
 
-That is the entire contract. Any tool that can attach this note creates a proof; any tool can read it
-back. The CLI and the website are conveniences, not a lock-in. (Each metadata text value is capped at
-64 bytes; a SHA-256 hex is exactly 64.)
+That is the entire contract. `name` and `description` are optional human labels (annotations, not
+part of the proof). Any tool that can attach this note creates a proof; any tool can read it back.
+The CLI and the website are conveniences, not a lock-in. (Each metadata text value is capped at 64
+bytes; a SHA-256 hex is exactly 64, and `name`/`description` are each at most 64 bytes.)
 
 ## Try it right now
 
@@ -113,6 +114,9 @@ Every option can also come from an environment variable (`POE_NETWORK`, `POE_BAC
 `POE_BACKEND_URL`, `POE_BLOCKFROST_PROJECT_ID`, `POE_SIGNING_KEY`, `POE_NOTARY_ADDRESS`). Flags win,
 then env, then sensible defaults. Run `java -jar notary.jar` with no arguments for the full usage.
 
+Both `submit` and `proof` also take an optional `--description "..."` (a short human note, at most 64
+bytes) alongside the positional name; it is recorded next to `name` in the label-1718 metadata.
+
 ## For local development only - Yaci DevKit (not preprod/mainnet)
 
 This section is **only** for experimenting on a private local network. If you want to record a proof
@@ -150,7 +154,7 @@ H=$(sha256sum myfile.pdf | cut -d' ' -f1)
 
 # 2. write the label-1718 note
 cat > proof.json <<JSON
-{ "1718": { "h": "$H", "alg": "SHA-256", "ts": "$(date -u +%Y-%m-%dT%H:%M:%SZ)", "name": "myfile.pdf" } }
+{ "1718": { "h": "$H", "alg": "SHA-256", "ts": "$(date -u +%Y-%m-%dT%H:%M:%SZ)", "name": "myfile.pdf", "description": "final signed copy" } }
 JSON
 
 # 3. find a UTxO to spend (needs the node socket)

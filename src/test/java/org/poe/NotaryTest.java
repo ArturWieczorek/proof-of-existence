@@ -29,6 +29,29 @@ class NotaryTest {
   }
 
   @Test
+  @DisplayName("description is written only when set, and parseProof round-trips it")
+  void descriptionRoundTrip() {
+    // absent when empty -> proofs without a description keep the old shape; parseProof yields ""
+    var noDesc = Notary.proofMap(sampleProof());
+    assertThat(noDesc.get("description")).isNull();
+    assertThat(Notary.parseProof(noDesc).description()).isEmpty();
+
+    // present when set, and round-trips through parse
+    ProofRecord withDesc =
+        new ProofRecord(
+            DocumentFingerprint.of("contract".getBytes()).hex(),
+            "SHA-256",
+            "2026-06-30T12:00:00Z",
+            "my-contract",
+            "final signed copy");
+    var map = Notary.proofMap(withDesc);
+    assertThat(map.get("description").toString()).isEqualTo("final signed copy");
+    ProofRecord parsed = Notary.parseProof(map);
+    assertThat(parsed.name()).isEqualTo("my-contract");
+    assertThat(parsed.description()).isEqualTo("final signed copy");
+  }
+
+  @Test
   @DisplayName("the serialized metadata embeds the proof under our label")
   void metadataSerializes() throws Exception {
     ProofRecord p = sampleProof();

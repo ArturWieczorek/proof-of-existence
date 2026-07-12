@@ -46,4 +46,33 @@ class ProofRecordTest {
     String hash = DocumentFingerprint.of("x".getBytes()).hex();
     assertThat(new ProofRecord(hash, "SHA-256", "2026-06-30T12:00:00Z", null).name()).isEmpty();
   }
+
+  @Test
+  @DisplayName("the 4-arg constructor defaults description to empty (backward compatible)")
+  void descriptionDefaultsEmpty() {
+    String hash = DocumentFingerprint.of("x".getBytes()).hex();
+    assertThat(new ProofRecord(hash, "SHA-256", "2026-06-30T12:00:00Z", "n").description())
+        .isEmpty();
+  }
+
+  @Test
+  @DisplayName("stores a description and treats a null description as empty")
+  void storesDescription() {
+    String hash = DocumentFingerprint.of("x".getBytes()).hex();
+    assertThat(
+            new ProofRecord(hash, "SHA-256", "2026-06-30T12:00:00Z", "n", "final signed copy")
+                .description())
+        .isEqualTo("final signed copy");
+    assertThat(new ProofRecord(hash, "SHA-256", "2026-06-30T12:00:00Z", "n", null).description())
+        .isEmpty();
+  }
+
+  @Test
+  @DisplayName("rejects a description longer than the metadata string limit (64 bytes)")
+  void rejectsLongDescription() {
+    String hash = DocumentFingerprint.of("x".getBytes()).hex();
+    String tooLong = "x".repeat(65);
+    assertThatThrownBy(() -> new ProofRecord(hash, "SHA-256", "2026-06-30T12:00:00Z", "n", tooLong))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

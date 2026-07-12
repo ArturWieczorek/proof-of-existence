@@ -35,6 +35,11 @@ public final class Notary {
     map.put("alg", proof.algorithm());
     map.put("ts", proof.timestamp());
     map.put("name", proof.name());
+    // Optional: only written when set, so proofs without a description stay byte-identical to
+    // before.
+    if (!proof.description().isEmpty()) {
+      map.put("description", proof.description());
+    }
     return map;
   }
 
@@ -50,11 +55,13 @@ public final class Notary {
    * This is what you do after fetching a transaction's metadata from the chain, before verifying.
    */
   public static ProofRecord parseProof(CBORMetadataMap map) {
+    Object description = map.get("description"); // absent on older proofs
     return new ProofRecord(
         String.valueOf(map.get("h")),
         String.valueOf(map.get("alg")),
         String.valueOf(map.get("ts")),
-        String.valueOf(map.get("name")));
+        String.valueOf(map.get("name")),
+        description == null ? "" : String.valueOf(description));
   }
 
   /**

@@ -35,10 +35,13 @@ ok("compareHash is case-insensitive", M.compareHash(H.toUpperCase(), H).status =
 // Algorithm-aware compare + Blockfrost proof parsing (label 1718 in the real /metadata shape).
 const bfMeta = [
   { label: "674", json_metadata: { msg: ["hi"] } },
-  { label: "1718", json_metadata: { h: H, alg: "SHA-256", ts: "2026-07-12T10:00:00Z", name: "doc.txt" } },
+  { label: "1718", json_metadata: { h: H, alg: "SHA-256", ts: "2026-07-12T10:00:00Z", name: "doc.txt", description: "final signed copy" } },
 ];
 const proof = M.parseBlockfrostProof(bfMeta);
 ok("parseBlockfrostProof finds 1718", proof && proof.h === H && proof.name === "doc.txt");
+ok("parseBlockfrostProof reads description", proof && proof.description === "final signed copy");
+ok("parseBlockfrostProof description defaults empty when absent",
+  M.parseBlockfrostProof([{ label: "1718", json_metadata: { h: H } }]).description === "");
 ok("compareProof MATCH", M.compareProof(H, proof).status === "MATCH");
 ok("compareProof NO_MATCH", M.compareProof("b".repeat(64), proof).status === "NO_MATCH");
 ok("compareProof UNSUPPORTED_ALG", M.compareProof(H, { h: H, alg: "blake2b-256" }).status === "UNSUPPORTED_ALG");

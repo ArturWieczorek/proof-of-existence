@@ -98,6 +98,7 @@
         <div class="row"><div>algorithm</div><div id="rAlg" class="mono"></div></div>
         <div class="row"><div>claimed time</div><div id="rTs" class="mono"></div></div>
         <div class="row"><div>name</div><div id="rName" class="mono"></div></div>
+        <div class="row"><div>description</div><div id="rDesc" class="mono"></div></div>
         <div class="row"><div>block time</div><div id="rBlock" class="mono"></div></div>
       </div>
       <p id="keylessNote" class="note hidden">
@@ -125,10 +126,11 @@
     <p class="note">The note format (Cardano transaction metadata, label 1718):</p>
     <pre>{
   "1718": {
-    "h":    "&lt;the document's SHA-256 hash, 64 hex chars&gt;",
-    "alg":  "SHA-256",
-    "ts":   "&lt;an ISO-8601 timestamp&gt;",
-    "name": "&lt;an optional short label&gt;"
+    "h":           "&lt;the document's SHA-256 hash, 64 hex chars&gt;",
+    "alg":         "SHA-256",
+    "ts":          "&lt;an ISO-8601 timestamp&gt;",
+    "name":        "&lt;optional short label, &lt;= 64 bytes&gt;",
+    "description": "&lt;optional short description, &lt;= 64 bytes&gt;"
   }
 }</pre>
     <p class="note"><b>1. Easiest - the command-line tool.</b> Download <code>notary.jar</code>
@@ -176,7 +178,7 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
       network: $("network"), tx: $("tx"), expected: $("expected"), projectId: $("projectId"),
       file: $("file"), fileHash: $("fileHash"), verify: $("verify"), status: $("status"),
       result: $("result"), verdict: $("verdict"), rHash: $("rHash"), rAlg: $("rAlg"), rTs: $("rTs"),
-      rName: $("rName"), rBlock: $("rBlock"), rExplorer: $("rExplorer"), qr: $("qr"), deepLink: $("deepLink"),
+      rName: $("rName"), rDesc: $("rDesc"), rBlock: $("rBlock"), rExplorer: $("rExplorer"), qr: $("qr"), deepLink: $("deepLink"),
       advanced: $("advanced"), onchainRows: $("onchainRows"), keylessNote: $("keylessNote"),
     };
 
@@ -255,6 +257,7 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
           els.rAlg.textContent = p.alg || "-";
           els.rTs.textContent = p.ts || "-";
           els.rName.textContent = p.name || "(none)";
+          els.rDesc.textContent = p.description || "(none)";
           els.rBlock.textContent = (res.blockTimeIso || "-") + (res.blockHeight ? "  (block " + res.blockHeight + ")" : "");
           els.rExplorer.href = res.explorer;
           if (res.found && expected && expected !== res.proof.h)

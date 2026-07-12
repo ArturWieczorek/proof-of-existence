@@ -109,11 +109,13 @@ public final class NotaryCli {
                   ? "MATCH"
                   : "NO MATCH");
       case "proof" -> {
-        if (args.length < 2) {
+        List<String> positionals = new ArrayList<>();
+        Map<String, String> flags = parseFlags(args, 1, positionals);
+        if (positionals.isEmpty()) {
           yield usage();
         }
-        ProofRecord p = proofFor(args[1], args.length > 2 ? args[2] : "");
-        yield "hash=" + p.hashHex() + " alg=" + p.algorithm() + " name=" + p.name();
+        ProofRecord p = proofFrom(positionals, flags);
+        yield "hash=" + p.hashHex() + " alg=" + p.algorithm() + " name=" + p.name() + descOf(p);
       }
       case "submit" -> {
         List<String> positionals = new ArrayList<>();
@@ -121,11 +123,16 @@ public final class NotaryCli {
         if (positionals.isEmpty()) {
           yield usage();
         }
-        String name = positionals.size() > 1 ? positionals.get(1) : flags.getOrDefault("name", "");
-        ProofRecord p = proofFor(positionals.get(0), name);
+        ProofRecord p = proofFrom(positionals, flags);
         try {
           String txHash = submitter.submit(p, flags);
-          yield "submitted: tx=" + txHash + " hash=" + p.hashHex() + " name=" + p.name();
+          yield "submitted: tx="
+              + txHash
+              + " hash="
+              + p.hashHex()
+              + " name="
+              + p.name()
+              + descOf(p);
         } catch (Exception e) {
           yield "submit failed: " + e.getMessage();
         }
@@ -134,12 +141,20 @@ public final class NotaryCli {
     };
   }
 
-  private static ProofRecord proofFor(String file, String name) {
+  /** Build a proof from positionals [file, name?] + flags (--name, --description). */
+  private static ProofRecord proofFrom(List<String> positionals, Map<String, String> flags) {
+    String name = positionals.size() > 1 ? positionals.get(1) : flags.getOrDefault("name", "");
+    String description = flags.getOrDefault("description", "");
     return new ProofRecord(
-        DocumentFingerprint.ofFile(Path.of(file)).hex(),
+        DocumentFingerprint.ofFile(Path.of(positionals.get(0))).hex(),
         DocumentFingerprint.ALGORITHM,
         Instant.now().toString(),
-        name);
+        name,
+        description);
+  }
+
+  private static String descOf(ProofRecord p) {
+    return p.description().isEmpty() ? "" : " description=" + p.description();
   }
 
   /** The real submitter: resolve config, build a backend + signer, and record the proof. */
@@ -324,6 +339,7 @@ public final class NotaryCli {
             + " yaci -> http://localhost:8080/api/v1/)",
         "  --blockfrost-project-id <id>                 (env POE_BLOCKFROST_PROJECT_ID; blockfrost only)",
         "  --signing-key <file.sk> --address <addr>     (a cardano-cli key; env POE_SIGNING_KEY/POE_NOTARY_ADDRESS)",
-        "  (or) POE_NOTARY_MNEMONIC=<mnemonic>          (a mnemonic; env only, it is a secret)");
+        "  (or) POE_NOTARY_MNEMONIC=<mnemonic>          (a mnemonic; env only, it is a secret)",
+        "  --description <text>                         (optional, <=64 bytes; also works with 'proof')");
   }
 }
