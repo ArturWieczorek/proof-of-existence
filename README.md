@@ -76,11 +76,20 @@ java -jar notary.jar hash   myfile.pdf                 # print the SHA-256 finge
 java -jar notary.jar verify myfile.pdf <hash>          # MATCH / NO MATCH
 java -jar notary.jar proof  myfile.pdf "my label"      # print the proof record you would record
 
-# record a proof on-chain (this is the only command that needs a key + network):
+# record a proof on-chain (the only command that needs a key + network):
+
+# --- preprod (a public testnet), keyless Koios (the default backend) ---
 java -jar notary.jar submit myfile.pdf "my label" \
     --network preprod \
-    --signing-key payment.skey \
-    --address addr_test1v...your-address
+    --signing-key payment.skey --address addr_test1v...your-address
+
+# --- mainnet, via Blockfrost (needs a free mainnet project id from blockfrost.io) ---
+export POE_NOTARY_MNEMONIC="word word word ... word"   # a secret: env, never a flag
+java -jar notary.jar submit myfile.pdf "my label" \
+    --network mainnet \
+    --backend blockfrost --blockfrost-project-id mainnet<yourProjectId>
+# (a mnemonic derives its own address, so --address is not needed here;
+#  equally you could use --signing-key payment.skey --address addr1... on mainnet)
 ```
 
 **Providers** (where the tool reads UTxOs/params and submits) - choose with `--backend`:
