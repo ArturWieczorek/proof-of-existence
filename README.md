@@ -117,6 +117,60 @@ then env, then sensible defaults. Run `java -jar notary.jar` with no arguments f
 Both `submit` and `proof` also take an optional `--description "..."` (a short human note, at most 64
 bytes) alongside the positional name; it is recorded next to `name` in the label-1718 metadata.
 
+## Record a proof with a browser wallet (Typhon) - no install
+
+Because a proof is just transaction metadata, you can record one from any wallet that supports
+metadata - no CLI, no Java. Here is [Typhon](https://typhonwallet.io/) on **preprod** (mainnet is the
+same, just switch the wallet's network).
+
+**1. Hash your file** to get its 64-character fingerprint (any SHA-256 tool):
+
+```bash
+java -jar notary.jar hash myfile.pdf      # or:  sha256sum myfile.pdf
+```
+
+**2. Start a send to your OWN address, then click "+ Add Metadata".** A proof transaction just needs
+to exist, so send a small amount (e.g. 1 ADA) to your own address - it comes straight back to you as
+change, so you only pay the network fee (about 0.17 ADA).
+
+![Typhon send screen with the Add Metadata button](docs/img/typhon-1-send.png)
+
+**3. Enter the label and the proof, then click "Add".**
+
+- **Metadata label:** `1718`
+- **Value:** paste this and edit the hash/name (it must be valid JSON, and every string <= 64 bytes):
+
+```json
+{
+  "h": "<your file's 64-char SHA-256 hash>",
+  "alg": "SHA-256",
+  "ts": "2026-07-12T17:01:49Z",
+  "name": "typhon wallet test",
+  "description": "final signed copy"
+}
+```
+
+![Typhon Add Metadata dialog: label 1718 and the proof JSON](docs/img/typhon-2-metadata.png)
+
+Gotchas: it must be **valid JSON** (curly braces, quoted keys) - not the `key:` YAML style;
+**copy the hash, do not retype it** (it is exactly 64 characters = the 64-byte maximum, so one extra
+character causes the error `string or buffer length invalid`); and keep `name`/`description` to 64
+bytes each. `alg` must be `SHA-256` for this tool to verify it.
+
+**4. Click "Send", then "Confirm".** The confirmation dialog shows the fee (about 0.17 ADA) and a
+preview of the metadata under label 1718. Confirm to submit. (Amount to yourself is returned as
+change, so the only real cost is the fee.)
+
+**5. Verify it.** Copy the transaction hash Typhon gives you, then open (replacing the two values):
+
+```
+https://arturwieczorek.github.io/proof-of-existence/#verify?net=preprod&tx=<yourTxHash>&h=<the 64-char hash>
+```
+
+and drop in the file -> **MATCH**. (Paste a free Blockfrost preprod project id on the page to also see
+the name, description and block time read back live.) The proof Typhon created is the same label-1718
+record the CLI makes, so `notary verify` accepts it too.
+
 ## For local development only - Yaci DevKit (not preprod/mainnet)
 
 This section is **only** for experimenting on a private local network. If you want to record a proof
