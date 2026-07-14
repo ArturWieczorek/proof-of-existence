@@ -5,73 +5,153 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <title>Proof of Existence - Verify</title>
+<meta name="description" content="Verify a document against a proof recorded on Cardano. Re-hash your file in the browser and check it against the on-chain record. The file never leaves your device." />
+<meta property="og:title" content="Proof of Existence - Verify a document" />
+<meta property="og:description" content="Re-hash a file in your browser and check it against a proof recorded on Cardano. The file never leaves your device; only the hash is on-chain." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
 <script>
-  // Set the theme before first paint so there is no flash of the wrong colours.
+  // Set theme + accent before first paint so there is no flash of the wrong colours.
   (function () {
+    var root = document.documentElement;
     try {
-      var saved = localStorage.getItem("poe-theme");
+      var savedMode = localStorage.getItem("poe-theme");
       var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      var theme = saved || (prefersDark ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", theme);
+      root.setAttribute("data-theme", savedMode || (prefersDark ? "dark" : "light"));
+      var acc = localStorage.getItem("poe-accent"); // format: "#hex|r, g, b"
+      if (acc) {
+        var p = acc.split("|");
+        if (p.length === 2) {
+          root.style.setProperty("--accent", p[0]);
+          root.style.setProperty("--accent-rgb", p[1]);
+        }
+      }
     } catch (e) {
-      document.documentElement.setAttribute("data-theme", "light");
+      root.setAttribute("data-theme", "light");
     }
   })();
 </script>
 <style>
+  /* Palette adopted from arturwieczorek.com (Tokyo-Night dark / warm-paper light). */
   :root {
     color-scheme: light;
-    --bg: #ffffff;
-    --fg: #1a1c20;
-    --link: #0b57d0;
-    --match-fg: #0a7d2e; --match-bg: #0a7d2e18; --match-bd: #0a7d2e88;
-    --nomatch-fg: #c8283d; --nomatch-bg: #b4232318; --nomatch-bd: #b4232388;
-    --warn-fg: #9a6a00; --warn-bg: #a6720018; --warn-bd: #a6720088;
+    --maxw: 760px;
+    /* Accent is a single value (the swatches change it); --accent-ink is the
+       readable form used for text/borders - darkened here for the light paper. */
+    --accent: #7ee787;
+    --accent-rgb: 126, 231, 135;
+    --accent-ink: color-mix(in srgb, var(--accent) 58%, #15151c);
+    --bg: #f3f3ee;
+    --bg-soft: #e8e8df;
+    --border: #dcdcd0;
+    --fg: #1c1d26;
+    --fg-dim: #555a6b;
+    --heading: #14151c;
+    --link: #2563eb;
+    --match-fg: #0a7d2e; --match-bg: #0a7d2e14; --match-bd: #0a7d2e66;
+    --nomatch-fg: #c8283d; --nomatch-bg: #c8283d14; --nomatch-bd: #c8283d66;
+    --warn-fg: #b06a1e; --warn-bg: #d2502a14; --warn-bd: #d2502a55;
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #10131a;
-    --fg: #e6e8ec;
-    --link: #7ab6ff;
-    --match-fg: #4ade80; --match-bg: #12351f; --match-bd: #22c55e77;
-    --nomatch-fg: #ff8a9c; --nomatch-bg: #3a1a1f; --nomatch-bd: #ef444477;
-    --warn-fg: #f0c15a; --warn-bg: #352a12; --warn-bd: #d4a01e77;
+    --accent-ink: var(--accent);   /* bright accent is readable on the dark bg */
+    --bg: #0a0e14;
+    --bg-soft: #0f141d;
+    --border: #1e2733;
+    --fg: #c0caf5;
+    --fg-dim: #9aa5ce;
+    --heading: #eef3f8;
+    --link: #7aa2f7;
+    --match-fg: #7ee787; --match-bg: rgba(126,231,135,.10); --match-bd: rgba(126,231,135,.42);
+    --nomatch-fg: #f7768e; --nomatch-bg: rgba(247,118,142,.12); --nomatch-bd: rgba(247,118,142,.42);
+    --warn-fg: #ff7e67; --warn-bg: rgba(255,126,103,.12); --warn-bd: rgba(255,126,103,.42);
   }
   * { box-sizing: border-box; }
   body {
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.5; margin: 0; padding: 1.25rem; max-width: 760px; margin-inline: auto;
-    background: var(--bg); color: var(--fg);
+    line-height: 1.5; margin: 0; padding: 1.25rem; max-width: var(--maxw); margin-inline: auto;
+    background: var(--bg);
+    background-image: radial-gradient(800px 500px at 0% 0%, rgba(var(--accent-rgb), .07), transparent);
+    background-attachment: fixed;
+    color: var(--fg);
   }
-  h1 { font-size: 1.5rem; margin: 0 0 .25rem; padding-right: 3rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; color: var(--heading); }
+  h1::before { content: "> "; color: var(--accent-ink); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   p.sub { margin: 0 0 1.25rem; opacity: .85; }
-  fieldset { border: 1px solid color-mix(in srgb, var(--fg) 25%, transparent); border-radius: 8px; margin: 0 0 1rem; padding: 1rem; }
-  legend { padding: 0 .4rem; font-weight: 600; }
+  fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 1rem; padding: 1rem; background: var(--bg-soft); }
+  legend { padding: 0 .4rem; font-weight: 600; color: var(--accent-ink); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; }
   label { display: block; font-weight: 600; margin: .5rem 0 .25rem; }
   input[type=text], select {
     width: 100%; padding: .5rem; font: inherit; border-radius: 6px;
-    border: 1px solid color-mix(in srgb, var(--fg) 35%, transparent); background: var(--bg); color: var(--fg);
+    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
   }
-  input[type=file] { width: 100%; }
-  button {
-    font: inherit; font-weight: 600; padding: .6rem 1rem; border-radius: 6px; cursor: pointer;
-    border: 1px solid color-mix(in srgb, var(--fg) 35%, transparent); background: color-mix(in srgb, var(--fg) 8%, var(--bg)); color: var(--fg);
+  input[type=text]:focus, select:focus { outline: none; border-color: var(--accent-ink); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .18); }
+  input.invalid { border-color: var(--nomatch-bd); }
+  input.invalid:focus { box-shadow: 0 0 0 3px var(--nomatch-bg); }
+
+  /* Top-right controls: accent swatches + light/dark toggle (in normal flow). */
+  #controls { display: flex; align-items: center; justify-content: flex-end; gap: .6rem; margin: 0 0 .35rem; }
+  #accent { display: inline-flex; align-items: center; gap: 7px; }
+  .sw {
+    width: 16px; height: 16px; padding: 0; border-radius: 50%; cursor: pointer;
+    background: var(--sw); border: 1px solid var(--border);
+    transition: transform .12s ease, box-shadow .15s ease;
   }
-  button:disabled { opacity: .5; cursor: default; }
+  .sw:hover { transform: scale(1.18); }
+  .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--sw); }
   #theme {
-    position: fixed; top: .9rem; right: .9rem; z-index: 10;
-    width: 2.5rem; height: 2.5rem; padding: 0; border-radius: 50%;
+    width: 2.2rem; height: 2.2rem; padding: 0; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-soft); color: var(--fg-dim);
   }
-  #theme svg { width: 1.25rem; height: 1.25rem; display: block; }
+  #theme svg { width: 1.15rem; height: 1.15rem; display: block; }
   #theme .sun { display: none; }
   #theme .moon { display: block; }
   :root[data-theme="dark"] #theme .sun { display: block; }
   :root[data-theme="dark"] #theme .moon { display: none; }
+
+  button {
+    font: inherit; font-weight: 600; padding: .6rem 1rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg-soft); color: var(--fg);
+    transition: border-color .15s, color .15s, transform .12s;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent-ink); color: var(--accent-ink); }
+  button:disabled { opacity: .5; cursor: default; }
+  :focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+  #verify { border-color: rgba(var(--accent-rgb), .5); color: var(--accent-ink); }
+  #verify.loading { position: relative; color: transparent; }
+  #verify.loading::after {
+    content: ""; position: absolute; inset: 0; margin: auto; width: 1.05rem; height: 1.05rem;
+    border: 2px solid rgba(var(--accent-rgb), .35); border-top-color: var(--accent-ink);
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  .copy {
+    font-size: .72rem; font-weight: 600; padding: .12rem .5rem; margin-left: .4rem;
+    border-radius: 5px; vertical-align: middle;
+  }
+
+  /* Drag-and-drop file zone (replaces the bare file input). */
+  .hidden-file { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+  #drop {
+    display: block; border: 2px dashed var(--border); border-radius: 10px;
+    padding: 1.25rem 1rem; text-align: center; cursor: pointer; background: var(--bg);
+    transition: border-color .15s, background .15s;
+  }
+  #drop:hover { border-color: var(--accent-ink); }
+  #drop.dragover { border-color: var(--accent-ink); background: rgba(var(--accent-rgb), .08); }
+  #drop.has-file { border-style: solid; border-color: rgba(var(--accent-rgb), .55); }
+  #drop .big { font-weight: 700; }
+  #fileName { font-weight: 700; }
+  #fileName::before { content: "file "; color: var(--accent-ink); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; }
+  .hashrow { display: flex; align-items: center; gap: .25rem; margin-top: .5rem; flex-wrap: wrap; }
+
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
   .row { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .75rem; align-items: baseline; margin: .2rem 0; }
-  .row div:first-child { font-weight: 600; opacity: .8; }
+  .row div:first-child { font-weight: 600; color: var(--fg-dim); }
   .verdict { font-size: 1.3rem; font-weight: 800; padding: .75rem 1rem; border-radius: 8px; margin: .5rem 0; }
+  .verdict:focus { outline: none; }
   .match { background: var(--match-bg); color: var(--match-fg); border: 1px solid var(--match-bd); }
   .nomatch { background: var(--nomatch-bg); color: var(--nomatch-fg); border: 1px solid var(--nomatch-bd); }
   .warn { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-bd); }
@@ -80,22 +160,36 @@
   #qr { margin: .5rem 0; background: #fff; padding: 8px; display: inline-block; border-radius: 6px; }
   footer { margin-top: 2rem; font-size: .85rem; opacity: .7; }
   .note { font-size: .85rem; opacity: .8; margin: .35rem 0 0; }
+  #hint { margin: 0; }
   details { margin-top: .5rem; }
   summary { cursor: pointer; font-weight: 600; }
   pre { background: color-mix(in srgb, var(--fg) 7%, var(--bg)); padding: .7rem; border-radius: 6px; overflow-x: auto; font-size: .82rem; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
-  <button id="theme" type="button" aria-label="Toggle dark mode" title="Toggle dark / light mode">
-    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-    </svg>
-    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-    </svg>
-  </button>
+  <div id="controls">
+    <div id="accent" role="group" aria-label="Accent colour">
+      <button class="sw" type="button" data-accent="#7ee787" data-rgb="126, 231, 135" title="green" aria-label="green accent" style="--sw:#7ee787"></button>
+      <button class="sw" type="button" data-accent="#d8a657" data-rgb="216, 166, 87" title="yellow" aria-label="yellow accent" style="--sw:#d8a657"></button>
+      <button class="sw" type="button" data-accent="#4d9fff" data-rgb="77, 159, 255" title="blue" aria-label="blue accent" style="--sw:#4d9fff"></button>
+      <button class="sw" type="button" data-accent="#ff6ac1" data-rgb="255, 106, 193" title="pink" aria-label="pink accent" style="--sw:#ff6ac1"></button>
+    </div>
+    <button id="theme" type="button" aria-label="Toggle dark mode" title="Toggle dark / light mode">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+      </svg>
+    </button>
+  </div>
+
   <h1>Proof of Existence - Verify a document</h1>
   <p class="sub">
     Re-hash a file in your browser and check it against a proof recorded on Cardano. The file never
@@ -131,18 +225,29 @@
   <fieldset>
     <legend>2. The document you hold</legend>
     <label for="file">File (hashed locally - not uploaded)</label>
-    <input id="file" type="file" />
-    <div id="fileHash" class="note mono"></div>
+    <label id="drop" for="file">
+      <input id="file" type="file" class="hidden-file" />
+      <span id="dropText"><span class="big">Drop a file here</span> or click to choose<br />
+        <span class="note">hashed locally with Web Crypto - never uploaded</span></span>
+      <span id="fileName" class="mono hidden"></span>
+    </label>
+    <div id="fileHashRow" class="hashrow hidden">
+      <span id="fileHash" class="note mono"></span>
+      <button class="copy" type="button" data-copy="fileHash">copy</button>
+    </div>
   </fieldset>
 
-  <button id="verify" disabled>Verify</button>
-  <span id="status" class="note"></span>
+  <div class="actions">
+    <button id="verify" disabled>Verify</button>
+    <span id="hint" class="note" role="status" aria-live="polite"></span>
+  </div>
+  <div id="status" class="note" role="status" aria-live="polite"></div>
 
   <div id="result" class="hidden">
-    <div id="verdict" class="verdict"></div>
+    <div id="verdict" class="verdict" tabindex="-1" aria-live="polite"></div>
     <fieldset>
       <legend>Recorded proof</legend>
-      <div class="row"><div>hash</div><div id="rHash" class="mono"></div></div>
+      <div class="row"><div>hash</div><div><span id="rHash" class="mono"></span><button class="copy" type="button" data-copy="rHash">copy</button></div></div>
       <div id="onchainRows">
         <div class="row"><div>algorithm</div><div id="rAlg" class="mono"></div></div>
         <div class="row"><div>claimed time</div><div id="rTs" class="mono"></div></div>
@@ -161,7 +266,7 @@
       <legend>Share this verification</legend>
       <p class="note">Anyone can scan or open this to re-check the same file against the same record.</p>
       <div id="qr"></div>
-      <div class="row"><div>link</div><div><a id="deepLink" class="mono" href="#"></a></div></div>
+      <div class="row"><div>link</div><div><a id="deepLink" class="mono" href="#"></a><button class="copy" type="button" data-copy="deepLink">copy</button></div></div>
     </fieldset>
   </div>
 
@@ -222,18 +327,50 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
       explorerUrl, ALGORITHM,
     } from "./poe-verify.js";
 
-    // Dark / light mode toggle (the initial theme is set in the head, before paint).
-    const themeBtn = document.getElementById("theme");
-    themeBtn.addEventListener("click", () => {
-      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
+    const $ = (id) => document.getElementById(id);
+    const root = document.documentElement;
+
+    // --- Light / dark toggle (initial theme set in the head, before paint). ---
+    $("theme").addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
       try { localStorage.setItem("poe-theme", next); } catch (e) { /* storage may be blocked */ }
     });
 
-    const $ = (id) => document.getElementById(id);
+    // --- Accent swatches (change --accent + --accent-rgb, like arturwieczorek.com). ---
+    const swatches = Array.from(document.querySelectorAll("#accent .sw"));
+    const currentAccent = () => getComputedStyle(root).getPropertyValue("--accent").trim().toLowerCase();
+    const markActive = (hex) =>
+      swatches.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.accent.toLowerCase() === hex)));
+    swatches.forEach((b) => b.addEventListener("click", () => {
+      root.style.setProperty("--accent", b.dataset.accent);
+      root.style.setProperty("--accent-rgb", b.dataset.rgb);
+      try { localStorage.setItem("poe-accent", b.dataset.accent + "|" + b.dataset.rgb); } catch (e) { /* ignore */ }
+      markActive(b.dataset.accent.toLowerCase());
+    }));
+    markActive(currentAccent());
+
+    // --- Copy buttons. ---
+    document.querySelectorAll(".copy").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const target = $(btn.dataset.copy);
+        const text = (target ? (target.textContent || "") : "").replace(/^SHA-256:\s*/, "").trim();
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = "copied";
+          setTimeout(() => { btn.textContent = old; }, 1200);
+        } catch (err) { /* clipboard may be blocked */ }
+      });
+    });
+
     const els = {
       network: $("network"), tx: $("tx"), expected: $("expected"), projectId: $("projectId"),
-      file: $("file"), fileHash: $("fileHash"), verify: $("verify"), status: $("status"),
+      file: $("file"), drop: $("drop"), dropText: $("dropText"), fileName: $("fileName"),
+      fileHashRow: $("fileHashRow"), fileHash: $("fileHash"),
+      verify: $("verify"), hint: $("hint"), status: $("status"),
       result: $("result"), verdict: $("verdict"), rHash: $("rHash"), rAlg: $("rAlg"), rTs: $("rTs"),
       rName: $("rName"), rDesc: $("rDesc"), rBlock: $("rBlock"), rExplorer: $("rExplorer"), qr: $("qr"), deepLink: $("deepLink"),
       advanced: $("advanced"), onchainRows: $("onchainRows"), keylessNote: $("keylessNote"),
@@ -243,29 +380,87 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
     const HEX = /^[0-9a-f]{64}$/, TX = /^[0-9a-f]{64}$/;
     const clean = (s) => s.trim().toLowerCase();
 
+    const markValidity = (el, re) => {
+      const v = el.value.trim();
+      el.classList.toggle("invalid", v.length > 0 && !re.test(v.toLowerCase()));
+    };
+
     function refreshButton() {
       const haveTx = TX.test(clean(els.tx.value));
       const haveExpected = HEX.test(clean(els.expected.value));
       const haveKey = els.projectId.value.trim().length > 0;
-      els.verify.disabled = !(fileBytes && haveTx && (haveExpected || haveKey));
+      const ready = !!(fileBytes && haveTx && (haveExpected || haveKey));
+      els.verify.disabled = !ready;
+      markValidity(els.tx, TX);
+      markValidity(els.expected, HEX);
+      if (ready) {
+        els.hint.textContent = "Ready - click Verify.";
+      } else {
+        const missing = [];
+        if (!fileBytes) missing.push("a file");
+        if (!haveTx) missing.push("the transaction hash");
+        if (!haveExpected && !haveKey) missing.push("the expected hash (or a Blockfrost key)");
+        els.hint.textContent = missing.length ? "Still needed: " + missing.join(", ") + "." : "";
+      }
     }
     ["input", "change"].forEach((e) => {
       els.tx.addEventListener(e, refreshButton);
       els.expected.addEventListener(e, refreshButton);
       els.projectId.addEventListener(e, refreshButton);
     });
+    // Enter in any text field submits when ready.
+    [els.tx, els.expected, els.projectId].forEach((el) =>
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !els.verify.disabled) { e.preventDefault(); els.verify.click(); }
+      }));
 
-    els.file.addEventListener("change", async () => {
+    const humanSize = (n) => {
+      if (n < 1024) return n + " B";
+      const u = ["KB", "MB", "GB", "TB"];
+      let i = -1;
+      do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+      return (n < 10 ? n.toFixed(1) : Math.round(n)) + " " + u[i];
+    };
+
+    async function handleFile(f) {
       els.result.classList.add("hidden");
-      const f = els.file.files[0];
-      if (!f) { fileBytes = null; fileHex = null; els.fileHash.textContent = ""; refreshButton(); return; }
+      if (!f) {
+        fileBytes = null; fileHex = null;
+        els.drop.classList.remove("has-file");
+        els.dropText.classList.remove("hidden");
+        els.fileName.classList.add("hidden");
+        els.fileHashRow.classList.add("hidden");
+        refreshButton();
+        return;
+      }
+      els.drop.classList.remove("has-file");
+      els.dropText.classList.add("hidden");
+      els.fileName.textContent = f.name + "  (" + humanSize(f.size) + ")";
+      els.fileName.classList.remove("hidden");
+      els.fileHash.textContent = "hashing...";
+      els.fileHashRow.classList.remove("hidden");
+      refreshButton();
       fileBytes = new Uint8Array(await f.arrayBuffer());
       fileHex = await sha256Hex(fileBytes);
       els.fileHash.textContent = "SHA-256: " + fileHex;
+      els.drop.classList.add("has-file");
       refreshButton();
+    }
+
+    els.file.addEventListener("change", () => handleFile(els.file.files[0]));
+    ["dragenter", "dragover"].forEach((ev) =>
+      els.drop.addEventListener(ev, (e) => { e.preventDefault(); els.drop.classList.add("dragover"); }));
+    ["dragleave", "dragend"].forEach((ev) =>
+      els.drop.addEventListener(ev, (e) => { e.preventDefault(); els.drop.classList.remove("dragover"); }));
+    els.drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      els.drop.classList.remove("dragover");
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleFile(f);
     });
 
     const setVerdict = (cls, text) => { els.verdict.className = "verdict " + cls; els.verdict.textContent = text; };
+    const setLoading = (on) => { els.verify.classList.toggle("loading", on); els.verify.textContent = on ? "Verifying..." : "Verify"; };
 
     function drawQr(text) {
       els.qr.innerHTML = "";
@@ -289,10 +484,18 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
       els.deepLink.textContent = link; els.deepLink.href = link;
     }
 
+    function revealResult() {
+      els.result.classList.remove("hidden");
+      const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      els.result.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      els.verdict.focus();
+    }
+
     els.verify.addEventListener("click", async () => {
       const network = els.network.value, tx = clean(els.tx.value);
       const expected = clean(els.expected.value), key = els.projectId.value.trim();
       els.verify.disabled = true;
+      setLoading(true);
       els.status.textContent = "";
       try {
         if (key) {
@@ -320,7 +523,7 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
           if (res.found && expected && expected !== res.proof.h)
             els.status.textContent = "Warning: the on-chain hash differs from the hash in the link you opened.";
           renderShare(network, tx, res.found ? res.proof.h : expected);
-          els.result.classList.remove("hidden");
+          revealResult();
           return;
         }
 
@@ -334,10 +537,11 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
         els.keylessNote.classList.remove("hidden");
         els.rExplorer.href = explorerUrl(network, tx);
         renderShare(network, tx, expected);
-        els.result.classList.remove("hidden");
+        revealResult();
       } catch (e) {
         els.status.textContent = "Lookup failed: " + e.message;
       } finally {
+        setLoading(false);
         refreshButton();
       }
     });
@@ -348,9 +552,9 @@ java -jar notary.jar verify myfile.pdf &lt;hash&gt;</pre>
       els.network.value = dl.network;
       els.tx.value = dl.tx;
       els.expected.value = dl.h;
-      refreshButton();
       els.status.textContent = "Loaded a shared verification - pick the file to check.";
     }
+    refreshButton();
   </script>
 </body>
 </html>
